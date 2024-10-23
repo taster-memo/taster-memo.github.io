@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jeu de Mémo sur la Sécurité Alimentaire</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #111827;
+            color: #ffffff;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .score {
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .reset-button {
+            background-color: #2563eb;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 1rem;
+            cursor: pointer;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+
+        .reset-button:hover {
+            background-color: #1d4ed8;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.8rem;
+            max-width: 800px;
+            width: 100%;
+            padding: 1rem;
+        }
+
+        .card {
+            aspect-ratio: 3/4;
+            background-color: #000000;
+            border-radius: 1rem;
+            cursor: pointer;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            position: relative;
+            max-width: 160px;
+            margin: auto;
+            width: 100%;
+        }
+
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem;
+            text-align: center;
+            border-radius: 1rem;
+            box-sizing: border-box;
+        }
+
+        .card-front {
+            background-color: white;
+            color: black;
+            transform: rotateY(180deg);
+        }
+
+        .card-back {
+            background-color: black;
+            color: white;
+        }
+
+        .emoji {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .text {
+            font-size: 0.75rem;
+            font-weight: 500;
+            padding: 0 0.3rem;
+        }
+
+        @media (min-width: 768px) {
+            .grid {
+                gap: 1rem;
+            }
+            
+            .emoji {
+                font-size: 2rem;
+            }
+            
+            .text {
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .grid {
+                gap: 0.5rem;
+                padding: 0.5rem;
+            }
+
+            .emoji {
+                font-size: 1.5rem;
+            }
+
+            .text {
+                font-size: 0.7rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Jeu de Mémo sur la Sécurité Alimentaire</h1>
+        <div class="score">Score: <span id="score">0</span></div>
+        <button class="reset-button" onclick="resetGame()">Nouvelle partie</button>
+        
+        <div class="grid" id="game-grid"></div>
+    </div>
+
+    <script>
+        const cards = [
+            { id: 1, type: "Température", content: "Maîtrise de la Température", emoji: "🌡️" },
+            { id: 2, type: "Température", content: "Maintenir les réfrigérateurs entre 0°C et 4°C et les congélateurs à -18°C.", emoji: "🌡️" },
+            { id: 3, type: "Humidité", content: "Contrôle de l'Humidité", emoji: "💧" },
+            { id: 4, type: "Humidité", content: "Réduire l'humidité pour prévenir la formation de moisissures.", emoji: "💧" },
+            { id: 5, type: "Propreté", content: "Propreté des Locaux", emoji: "🧟‍♂️" },
+            { id: 6, type: "Propreté", content: "Nettoyer et désinfecter régulièrement les surfaces de travail.", emoji: "🧟‍♂️" },
+            { id: 7, type: "Ventilation", content: "Ventilation Efficace", emoji: "🌬️" },
+            { id: 8, type: "Ventilation", content: "Une bonne ventilation évite la condensation et réduit les contaminants dans l'air.", emoji: "🌬️" },
+            { id: 9, type: "Aménagement", content: "Aménagement des Locaux", emoji: "🏰" },
+            { id: 10, type: "Aménagement", content: "Séparer les zones propres et les zones sales pour prévenir la contamination croisée.", emoji: "🏰" },
+            { id: 11, type: "Nuisibles", content: "Contrôle des Nuisibles", emoji: "🐀" },
+            { id: 12, type: "Nuisibles", content: "Mettre en place des pièges et boucher les points d'entrée pour éviter les infestations.", emoji: "🐀" },
+            { id: 13, type: "Éclairage", content: "Bon Éclairage", emoji: "💡" },
+            { id: 14, type: "Éclairage", content: "Assurer un éclairage suffisant pour un nettoyage et une manipulation sûrs.", emoji: "💡" }
+        ];
+
+        let score = 0;
+        let selectedCards = [];
+        let matchedPairs = [];
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function createCard(card) {
+            const cardElement = document.createElement('div');
+            cardElement.className = 'card';
+            cardElement.dataset.id = card.id;
+            cardElement.dataset.type = card.type;
+            
+            cardElement.innerHTML = `
+                <div class="card-front">
+                    <div class="emoji">${card.emoji}</div>
+                    <div class="text">${card.content}</div>
+                </div>
+                <div class="card-back">
+					<img src="https://i.ibb.co/MGnWWVS/logo.png" width=50% height=30%/>
+                </div>
+            `;
+            
+            cardElement.addEventListener('click', () => handleCardClick(cardElement, card));
+            return cardElement;
+        }
+
+        function handleCardClick(cardElement, card) {
+            if (selectedCards.length >= 2 || selectedCards.includes(card) || 
+                matchedPairs.includes(card.type)) return;
+
+            cardElement.classList.add('flipped');
+            selectedCards.push(card);
+
+            if (selectedCards.length === 2) {
+                setTimeout(checkMatch, 1000);
+            }
+        }
+
+        function checkMatch() {
+            const [first, second] = selectedCards;
+            const allCards = document.querySelectorAll('.card');
+
+            if (first.type === second.type) {
+                matchedPairs.push(first.type);
+                score++;
+                document.getElementById('score').textContent = score;
+            } else {
+                allCards.forEach(card => {
+                    if (!matchedPairs.includes(card.dataset.type)) {
+                        card.classList.remove('flipped');
+                    }
+                });
+            }
+
+            selectedCards = [];
+        }
+
+        function resetGame() {
+            score = 0;
+            selectedCards = [];
+            matchedPairs = [];
+            document.getElementById('score').textContent = score;
+            
+            const gameGrid = document.getElementById('game-grid');
+            gameGrid.innerHTML = '';
+            
+            const shuffledCards = shuffleArray([...cards]);
+            shuffledCards.forEach(card => {
+                gameGrid.appendChild(createCard(card));
+            });
+        }
+
+        // Initialiser le jeu
+        resetGame();
+    </script>
+</body>
+</html>
